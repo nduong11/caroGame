@@ -1,8 +1,8 @@
 const WebSocket = require('ws');
-const port = 8080;
 
+const port = process.env.PORT || 6000; // Sử dụng cổng từ biến môi trường
 const wss = new WebSocket.Server({ port });
-console.log(`WebSocket server is running on ws://localhost:${port}`);
+console.log(`WebSocket server is running on port ${port}`);
 
 // Manage rooms
 const rooms = new Map();
