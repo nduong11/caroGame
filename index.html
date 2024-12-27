@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caro Game - Multi-room</title>
+  <style>
+    #board {
+      display: grid;
+      grid-template-columns: repeat(10, 50px);
+      grid-gap: 2px;
+    }
+    .cell {
+      width: 50px;
+      height: 50px;
+      background-color: #f4f4f4;
+      text-align: center;
+      vertical-align: middle;
+      line-height: 50px;
+      font-size: 24px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Caro Game - Multi-room</h1>
+  <label for="roomId">Room ID:</label>
+  <input type="text" id="roomId" />
+  <button id="joinRoom">Join Room</button>
+  <div id="status"></div>
+  <div id="board"></div>
+  <script>
+    const boardSize = 15;
+    const board = document.getElementById('board');
+    const status = document.getElementById('status');
+    const joinRoomButton = document.getElementById('joinRoom');
+    const roomIdInput = document.getElementById('roomId');
+    const cells = [];
+    let mySymbol;
+
+    // Create board
+    for (let i = 0; i < boardSize * boardSize; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.index = i;
+      board.appendChild(cell);
+      cells.push(cell);
+    }
+
+    // WebSocket setup
+    const ws = new WebSocket('ws://localhost:8080');
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'waiting' || data.type === 'game-ready') {
+        status.textContent = data.message;
+      } else if (data.type === 'game-start') {
+        status.textContent = 'Game started! Your symbol: ' + data.symbol;
+        mySymbol = data.symbol;
+      } else if (data.type === 'move') {
+        const { index, symbol } = data.payload;
+        cells[index].textContent = symbol;
+      } else if (data.type === 'game-over') {
+        status.textContent = data.message;
+        ws.close();
+      }
+    };
+
+    joinRoomButton.addEventListener('click', () => {
+      const roomId = roomIdInput.value.trim();
+      if (roomId) {
+        ws.send(JSON.stringify({ type: 'join-room', payload: { roomId } }));
+      }
+    });
+
+    board.addEventListener('click', (e) => {
+      if (e.target.className.includes('cell') && !e.target.textContent) {
+        const index = e.target.dataset.index;
+        ws.send(JSON.stringify({ type: 'move', payload: { index: parseInt(index) } }));
+      }
+    });
+  </script>
+</body>
+</html>
