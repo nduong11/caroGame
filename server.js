@@ -66,16 +66,16 @@ function handleJoinRoom(ws, roomId, username, avatar) {
         })
       );
     });
+    setTimeout(() => {
+      ws.send(
+        JSON.stringify({
+          type: "game-start",
+          message: "Game started!",
+          symbol,
+        })
+      );
+    }, 2000);
   }
-  setTimeout(() => {
-    ws.send(
-      JSON.stringify({
-        type: "game-start",
-        message: "Game started!",
-        symbol,
-      })
-    );
-  }, 2000);
 }
 
 // Handle a player's move
