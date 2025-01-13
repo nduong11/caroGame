@@ -1,4 +1,4 @@
-const WebSocket = require('ws');
+const WebSocket = require("ws");
 
 const port = process.env.PORT || 8080; // Sử dụng cổng từ biến môi trường
 const wss = new WebSocket.Server({ port });
@@ -7,21 +7,21 @@ console.log(`WebSocket server is running on port ${port}`);
 // Manage rooms
 const rooms = new Map();
 
-wss.on('connection', (ws) => {
-  console.log('Player connected.');
+wss.on("connection", (ws) => {
+  console.log("Player connected.");
 
-  ws.on('message', (message) => {
+  ws.on("message", (message) => {
     const { type, payload } = JSON.parse(message);
 
-    if (type === 'join-room') {
+    if (type === "join-room") {
       handleJoinRoom(ws, payload.roomId, payload.username, payload.avatar);
-    } else if (type === 'move') {
+    } else if (type === "move") {
       handleMove(ws, payload);
     }
   });
 
-  ws.on('close', () => {
-    console.log('Player disconnected.');
+  ws.on("close", () => {
+    console.log("Player disconnected.");
     handleDisconnect(ws);
   });
 });
@@ -30,39 +30,55 @@ wss.on('connection', (ws) => {
 function handleJoinRoom(ws, roomId, username, avatar) {
   if (!rooms.has(roomId)) {
     // Create a new room if it doesn't exist
-    rooms.set(roomId, { players: [], board: Array(225).fill(null), currentTurn: null }); // 15x15 = 225
+    rooms.set(roomId, {
+      players: [],
+      board: Array(225).fill(null),
+      currentTurn: null,
+    }); // 15x15 = 225
   }
 
   const room = rooms.get(roomId);
 
-if (room.players.length >= 2) {
-  ws.send(JSON.stringify({ type: 'error', message: 'Room is full!' }));
-  return;
-}
+  if (room.players.length >= 2) {
+    ws.send(JSON.stringify({ type: "error", message: "Room is full!" }));
+    return;
+  }
 
-room.players.push({ ws, username, avatar });
+  room.players.push({ ws, username, avatar });
 
-// Assign X or O to the player
-const symbol = room.players.length === 1 ? 'X' : 'O';
-ws.symbol = symbol;
-ws.roomId = roomId;
+  // Assign X or O to the player
+  const symbol = room.players.length === 1 ? "X" : "O";
+  ws.symbol = symbol;
+  ws.roomId = roomId;
 
-ws.send(JSON.stringify({ type: 'game-start', message: 'Game started!', roomId, symbol, username, avatar }));
-
-if (room.players.length === 2) {
-  room.currentTurn = room.players[0].ws;
-  room.players.forEach((player) => {
-    player.ws.send(JSON.stringify({
-      type: 'game-ready',
-      size: 15,
-      message: 'Both players connected!',
-      players: room.players.map(p => ({
-        username: p.username,
-        avatar: p.avatar,
-      })),
-    }));
-  });
-}
+  if (room.players.length === 2) {
+    room.currentTurn = room.players[0].ws;
+    room.players.forEach((player) => {
+      player.ws.send(
+        JSON.stringify({
+          type: "game-ready",
+          size: 15,
+          message: "Both players connected!",
+          players: room.players.map((p) => ({
+            username: p.username,
+            avatar: p.avatar,
+          })),
+        })
+      );
+    });
+  }
+  setTimeout(() => {
+    ws.send(
+      JSON.stringify({
+        type: "game-start",
+        message: "Game started!",
+        roomId,
+        symbol,
+        username,
+        avatar,
+      })
+    );
+  }, 2000);
 }
 
 // Handle a player's move
@@ -71,12 +87,12 @@ function handleMove(ws, { index }) {
   if (!room) return;
 
   if (room.currentTurn !== ws) {
-    ws.send(JSON.stringify({ type: 'error', message: 'Not your turn!' }));
+    ws.send(JSON.stringify({ type: "error", message: "Not your turn!" }));
     return;
   }
 
   if (room.board[index] || index < 0 || index >= room.board.length) {
-    ws.send(JSON.stringify({ type: 'error', message: 'Invalid move!' }));
+    ws.send(JSON.stringify({ type: "error", message: "Invalid move!" }));
     return;
   }
 
@@ -86,24 +102,29 @@ function handleMove(ws, { index }) {
 
   // Gửi thông tin di chuyển cho cả hai người chơi
   room.players.forEach((player) => {
-    player.ws.send(JSON.stringify({ type: 'move', payload: { index, symbol: ws.symbol } }));
+    player.ws.send(
+      JSON.stringify({ type: "move", payload: { index, symbol: ws.symbol } })
+    );
   });
 
   // Kiểm tra thắng hoặc hòa
   const winner = checkWin(room.board, ws.symbol, index);
   if (winner) {
     room.players.forEach((player) => {
-      player.ws.send(JSON.stringify({ type: 'game-over', message: `${ws.symbol} wins!` }));
+      player.ws.send(
+        JSON.stringify({ type: "game-over", message: `${ws.symbol} wins!` })
+      );
     });
     rooms.delete(ws.roomId);
   } else if (room.board.every((cell) => cell)) {
     room.players.forEach((player) => {
-      player.ws.send(JSON.stringify({ type: 'game-over', message: 'It\'s a draw!' }));
+      player.ws.send(
+        JSON.stringify({ type: "game-over", message: "It's a draw!" })
+      );
     });
     rooms.delete(ws.roomId);
   }
 }
-
 
 // Handle player disconnection
 function handleDisconnect(ws) {
@@ -115,7 +136,9 @@ function handleDisconnect(ws) {
   // Notify the other player and delete the room
   room.players.forEach((player) => {
     if (player !== ws) {
-      player.ws.send(JSON.stringify({ type: 'game-over', message: 'Opponent disconnected!' }));
+      player.ws.send(
+        JSON.stringify({ type: "game-over", message: "Opponent disconnected!" })
+      );
     }
   });
 
@@ -141,14 +164,28 @@ function checkWin(board, symbol, index) {
     for (let step = 1; step < 5; step++) {
       const r = row + dr * step;
       const c = col + dc * step;
-      if (r < 0 || r >= size || c < 0 || c >= size || board[r * size + c] !== symbol) break;
+      if (
+        r < 0 ||
+        r >= size ||
+        c < 0 ||
+        c >= size ||
+        board[r * size + c] !== symbol
+      )
+        break;
       count++;
     }
 
     for (let step = 1; step < 5; step++) {
       const r = row - dr * step;
       const c = col - dc * step;
-      if (r < 0 || r >= size || c < 0 || c >= size || board[r * size + c] !== symbol) break;
+      if (
+        r < 0 ||
+        r >= size ||
+        c < 0 ||
+        c >= size ||
+        board[r * size + c] !== symbol
+      )
+        break;
       count++;
     }
 
