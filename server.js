@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 
-const port = process.env.PORT || 6000; // Sử dụng cổng từ biến môi trường
+const port = process.env.PORT || 8080; // Sử dụng cổng từ biến môi trường
 const wss = new WebSocket.Server({ port });
 console.log(`WebSocket server is running on port ${port}`);
 
@@ -8,26 +8,26 @@ console.log(`WebSocket server is running on port ${port}`);
 const rooms = new Map();
 
 wss.on('connection', (ws) => {
-  console.log('A player connected.');
+  console.log('Player connected.');
 
   ws.on('message', (message) => {
     const { type, payload } = JSON.parse(message);
 
     if (type === 'join-room') {
-      handleJoinRoom(ws, payload.roomId);
+      handleJoinRoom(ws, payload.roomId, payload.username, payload.avatar);
     } else if (type === 'move') {
       handleMove(ws, payload);
     }
   });
 
   ws.on('close', () => {
-    console.log('A player disconnected.');
+    console.log('Player disconnected.');
     handleDisconnect(ws);
   });
 });
 
 // Handle joining a room
-function handleJoinRoom(ws, roomId) {
+function handleJoinRoom(ws, roomId, username, avatar) {
   if (!rooms.has(roomId)) {
     // Create a new room if it doesn't exist
     rooms.set(roomId, { players: [], board: Array(225).fill(null), currentTurn: null }); // 15x15 = 225
@@ -35,28 +35,34 @@ function handleJoinRoom(ws, roomId) {
 
   const room = rooms.get(roomId);
 
-  if (room.players.length >= 2) {
-    ws.send(JSON.stringify({ type: 'error', message: 'Room is full!' }));
-    return;
-  }
+if (room.players.length >= 2) {
+  ws.send(JSON.stringify({ type: 'error', message: 'Room is full!' }));
+  return;
+}
 
-  room.players.push(ws);
+room.players.push({ ws, username, avatar });
 
-  // Assign X or O to the player
-  const symbol = room.players.length === 1 ? 'X' : 'O';
-  ws.symbol = symbol;
-  ws.roomId = roomId;
+// Assign X or O to the player
+const symbol = room.players.length === 1 ? 'X' : 'O';
+ws.symbol = symbol;
+ws.roomId = roomId;
 
-  ws.send(JSON.stringify({ type: 'game-start', message: 'Game started!', roomId, symbol }));
+ws.send(JSON.stringify({ type: 'game-start', message: 'Game started!', roomId, symbol, username, avatar }));
 
-  if (room.players.length === 2) {
-    room.currentTurn = room.players[0];
-    room.players.forEach((player) =>
-      player.send(JSON.stringify({ type: 'game-ready', size: 15, message: 'Both players connected!' }))
-    );
-  } else {
-    ws.send(JSON.stringify({ type: 'waiting', message: 'Waiting for another player...' }));
-  }
+if (room.players.length === 2) {
+  room.currentTurn = room.players[0].ws;
+  room.players.forEach((player) => {
+    player.ws.send(JSON.stringify({
+      type: 'game-ready',
+      size: 15,
+      message: 'Both players connected!',
+      players: room.players.map(p => ({
+        username: p.username,
+        avatar: p.avatar,
+      })),
+    }));
+  });
+}
 }
 
 // Handle a player's move
@@ -74,29 +80,30 @@ function handleMove(ws, { index }) {
     return;
   }
 
-  // Update the board and switch turns
+  // Cập nhật bàn cờ và chuyển lượt
   room.board[index] = ws.symbol;
-  room.currentTurn = room.players.find((player) => player !== ws);
+  room.currentTurn = room.players.find((player) => player.ws !== ws).ws;
 
-  // Broadcast the move to both players
-  room.players.forEach((player) =>
-    player.send(JSON.stringify({ type: 'move', payload: { index, symbol: ws.symbol } }))
-  );
+  // Gửi thông tin di chuyển cho cả hai người chơi
+  room.players.forEach((player) => {
+    player.ws.send(JSON.stringify({ type: 'move', payload: { index, symbol: ws.symbol } }));
+  });
 
-  // Check for a win or draw
+  // Kiểm tra thắng hoặc hòa
   const winner = checkWin(room.board, ws.symbol, index);
   if (winner) {
-    room.players.forEach((player) =>
-      player.send(JSON.stringify({ type: 'game-over', message: `${ws.symbol} wins!` }))
-    );
+    room.players.forEach((player) => {
+      player.ws.send(JSON.stringify({ type: 'game-over', message: `${ws.symbol} wins!` }));
+    });
     rooms.delete(ws.roomId);
   } else if (room.board.every((cell) => cell)) {
-    room.players.forEach((player) =>
-      player.send(JSON.stringify({ type: 'game-over', message: 'It\'s a draw!' }))
-    );
+    room.players.forEach((player) => {
+      player.ws.send(JSON.stringify({ type: 'game-over', message: 'It\'s a draw!' }));
+    });
     rooms.delete(ws.roomId);
   }
 }
+
 
 // Handle player disconnection
 function handleDisconnect(ws) {
@@ -108,7 +115,7 @@ function handleDisconnect(ws) {
   // Notify the other player and delete the room
   room.players.forEach((player) => {
     if (player !== ws) {
-      player.send(JSON.stringify({ type: 'game-over', message: 'Opponent disconnected!' }));
+      player.ws.send(JSON.stringify({ type: 'game-over', message: 'Opponent disconnected!' }));
     }
   });
 

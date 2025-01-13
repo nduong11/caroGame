@@ -27,15 +27,21 @@
   <h1>Caro Game - Multi-room</h1>
   <label for="roomId">Room ID:</label>
   <input type="text" id="roomId" />
+  <input type="username" id="username" />
+  <input type="avatar" id="avatar" />
   <button id="joinRoom">Join Room</button>
   <div id="status"></div>
+  <div id="dataReq"></div>
   <div id="board"></div>
   <script>
     const boardSize = 15;
     const board = document.getElementById('board');
     const status = document.getElementById('status');
+    const dataReq = document.getElementById('dataReq');
     const joinRoomButton = document.getElementById('joinRoom');
     const roomIdInput = document.getElementById('roomId');
+    const usernameInput = document.getElementById('username');
+    const avatarInput = document.getElementById('avatar');
     const cells = [];
     let mySymbol;
 
@@ -49,16 +55,20 @@
     }
 
     // WebSocket setup
-    const ws = new WebSocket('wss://carogame.onrender.com');
+    // const ws = new WebSocket('wss://carogame.onrender.com');
+    const ws = new WebSocket('ws://localhost:8080');
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
       if (data.type === 'waiting' || data.type === 'game-ready') {
         status.textContent = data.message;
+        dataReq.textContent = `${data.players[0].username}, ${data.players[1].username}`;
+        console.log(data.players);
       } else if (data.type === 'game-start') {
         status.textContent = 'Game started! Your symbol: ' + data.symbol;
         mySymbol = data.symbol;
+        
       } else if (data.type === 'move') {
         const { index, symbol } = data.payload;
         cells[index].textContent = symbol;
@@ -70,8 +80,10 @@
 
     joinRoomButton.addEventListener('click', () => {
       const roomId = roomIdInput.value.trim();
+      const username = usernameInput.value.trim();
+      const avatar = avatarInput.value.trim();
       if (roomId) {
-        ws.send(JSON.stringify({ type: 'join-room', payload: { roomId } }));
+        ws.send(JSON.stringify({ type: 'join-room', payload: { roomId, username, avatar } }));
       }
     });
 
