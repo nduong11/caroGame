@@ -51,6 +51,13 @@ function handleJoinRoom(ws, roomId, username, avatar) {
   ws.symbol = symbol;
   ws.roomId = roomId;
 
+  ws.send(
+    JSON.stringify({
+      type: "waiting",
+      message: "Waiting for other players!",
+    })
+  );
+
   if (room.players.length === 2) {
     room.currentTurn = room.players[0].ws;
     room.players.forEach((player) => {
@@ -66,15 +73,6 @@ function handleJoinRoom(ws, roomId, username, avatar) {
         })
       );
     });
-    setTimeout(() => {
-      ws.send(
-        JSON.stringify({
-          type: "game-start",
-          message: "Game started!",
-          symbol,
-        })
-      );
-    }, 2000);
   }
 }
 
