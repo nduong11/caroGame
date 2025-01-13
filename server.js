@@ -72,10 +72,7 @@ function handleJoinRoom(ws, roomId, username, avatar) {
       JSON.stringify({
         type: "game-start",
         message: "Game started!",
-        roomId,
         symbol,
-        username,
-        avatar,
       })
     );
   }, 2000);
