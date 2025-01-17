@@ -191,17 +191,10 @@ function checkWin(board, symbol, index) {
   const col = index % size;
 
   const directions = [
-<<<<<<< HEAD
     { dr: 0, dc: 1 },  // Horizontal
     { dr: 1, dc: 0 },  // Vertical
     { dr: 1, dc: 1 },  // Diagonal (top-left to bottom-right)
     { dr: 1, dc: -1 }, // Diagonal (top-right to bottom-left)
-=======
-    { dr: 0, dc: 1 },
-    { dr: 1, dc: 0 },
-    { dr: 1, dc: 1 },
-    { dr: 1, dc: -1 },
->>>>>>> 204a6b0a92e091388dc9d4255185a369879e950b
   ];
 
   for (const { dr, dc } of directions) {

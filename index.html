@@ -54,8 +54,6 @@
       board.appendChild(cell);
       cells.push(cell);
     }
-<<<<<<< HEAD
-
     // WebSocket setup
     const ws = new WebSocket('wss://carogame.onrender.com');
     // const ws = new WebSocket('ws://localhost:8080');
@@ -71,19 +69,6 @@
       } else if (data.type === 'game-start') {
         status.textContent = 'Game started! Your symbol: ' + data.symbol;
         mySymbol = data.symbol;
-        
-=======
-  
-    const ws = new WebSocket('ws://localhost:8080');
-  
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'waiting') {
-        status.textContent = data.message;
-      } else if (data.type === 'game-ready') {
-        status.textContent = data.message;
-        dataReq.textContent = `${data.players[0].username}, ${data.players[0].avatar} -- ${data.players[1].username}, ${data.players[1].avatar}`;
->>>>>>> 204a6b0a92e091388dc9d4255185a369879e950b
       } else if (data.type === 'move') {
         const { index, symbol } = data.payload;
         cells[index].textContent = symbol;
