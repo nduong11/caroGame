@@ -207,7 +207,7 @@ function checkWin(board, symbol, index) {
       const c = col + dc * step;
       if (r < 0 || r >= size || c < 0 || c >= size || board[r * size + c] !== symbol)
         break;
-      winningCells.push({ row: r, col: c });
+      winningCells.push(r*15+c);
       count++;
     }
 
