@@ -46,8 +46,7 @@
     const avatarInput = document.getElementById('avatar');
     const cells = [];
     let mySymbol;
-
-    // Create board
+  
     for (let i = 0; i < boardSize * boardSize; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
@@ -55,6 +54,7 @@
       board.appendChild(cell);
       cells.push(cell);
     }
+<<<<<<< HEAD
 
     // WebSocket setup
     const ws = new WebSocket('wss://carogame.onrender.com');
@@ -72,15 +72,31 @@
         status.textContent = 'Game started! Your symbol: ' + data.symbol;
         mySymbol = data.symbol;
         
+=======
+  
+    const ws = new WebSocket('ws://localhost:8080');
+  
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'waiting') {
+        status.textContent = data.message;
+      } else if (data.type === 'game-ready') {
+        status.textContent = data.message;
+        dataReq.textContent = `${data.players[0].username}, ${data.players[0].avatar} -- ${data.players[1].username}, ${data.players[1].avatar}`;
+>>>>>>> 204a6b0a92e091388dc9d4255185a369879e950b
       } else if (data.type === 'move') {
         const { index, symbol } = data.payload;
         cells[index].textContent = symbol;
       } else if (data.type === 'game-over') {
         status.textContent = data.message;
         ws.close();
+      } else if (data.type === 'time-update') {
+        status.textContent = data.payload.timeLeft + ' ' + data.payload.currentPlayer;
+      } else if (data.type === 'timeout') {
+        status.textContent = data.message;
       }
     };
-
+  
     joinRoomButton.addEventListener('click', () => {
       const roomId = roomIdInput.value.trim();
       const username = usernameInput.value.trim();
@@ -89,7 +105,7 @@
         ws.send(JSON.stringify({ type: 'join-room', payload: { roomId, username, avatar } }));
       }
     });
-
+  
     board.addEventListener('click', (e) => {
       if (e.target.className.includes('cell') && !e.target.textContent) {
         const index = e.target.dataset.index;
@@ -97,5 +113,6 @@
       }
     });
   </script>
+  
 </body>
 </html>
