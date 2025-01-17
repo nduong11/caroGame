@@ -27,7 +27,9 @@
   <h1>Caro Game - Multi-room</h1>
   <label for="roomId">Room ID:</label>
   <input type="text" id="roomId" />
+  <label for="username">Username:</label>
   <input type="username" id="username" />
+  <label for="avatar">Avatar:</label>
   <input type="avatar" id="avatar" />
   <button id="joinRoom">Join Room</button>
   <div id="status"></div>
@@ -55,15 +57,16 @@
     }
 
     // WebSocket setup
-    // const ws = new WebSocket('wss://carogame.onrender.com');
-    const ws = new WebSocket('ws://localhost:8080');
+    const ws = new WebSocket('wss://carogame.onrender.com');
+    // const ws = new WebSocket('ws://localhost:8080');
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-
-      if (data.type === 'waiting' || data.type === 'game-ready') {
+      if(data.type === 'waiting'){
         status.textContent = data.message;
-        dataReq.textContent = `${data.players[0].username}, ${data.players[1].username}`;
+      }else if (data.type === 'game-ready') {
+        status.textContent = data.message;
+        dataReq.textContent = `${data.players[0].username}, ${data.players[0].avatar} -- ${data.players[1].username}, ${data.players[1].avatar}`;
         console.log(data.players);
       } else if (data.type === 'game-start') {
         status.textContent = 'Game started! Your symbol: ' + data.symbol;
