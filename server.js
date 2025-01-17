@@ -199,7 +199,7 @@ function checkWin(board, symbol, index) {
 
   for (const { dr, dc } of directions) {
     let count = 1;
-    const winningCells = [{ row, col }]; // Start with the current position
+    const winningCells = [row*15+col]; // Start with the current position
 
     // Check forward in the direction
     for (let step = 1; step < 5; step++) {
