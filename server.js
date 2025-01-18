@@ -64,11 +64,11 @@ function handleJoinRoom(ws, roomId, username, avatar) {
       player.ws.send(
         JSON.stringify({
           type: "game-ready",
-          symbol: p.ws.symbol,
           message: "Both players connected!",
           players: room.players.map((p) => ({
             username: p.username,
             avatar: p.avatar,
+            symbol: p.ws.symbol,
           })),
         })
       );
