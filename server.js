@@ -110,7 +110,7 @@ function handleMove(ws, { index }) {
   if (winner) {
     room.players.forEach((player) => {
       player.ws.send(
-        JSON.stringify({ type: "game-over", message: `${ws.symbol} wins!`,  payload: winner })
+        JSON.stringify({ type: "game-over", message: `${ws.symbol} wins!`,  payload: winner, symbol: ws.symbol })
       );
     });
     rooms.delete(ws.roomId);
