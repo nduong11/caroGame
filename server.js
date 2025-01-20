@@ -14,7 +14,7 @@ wss.on("connection", (ws) => {
     const { type, payload } = JSON.parse(message);
 
     if (type === "join-room") {
-      handleJoinRoom(ws, payload.roomId, payload.username, payload.avatar, payload.create);
+      handleJoinRoom(ws, payload.roomId, payload.username, payload.avatar);
     } else if (type === "move") {
       handleMove(ws, payload);
     }
@@ -27,8 +27,8 @@ wss.on("connection", (ws) => {
 });
 
 // Handle joining a room
-function handleJoinRoom(ws, roomId, username, avatar, create) {
-  if (!rooms.has(roomId) && create) {
+function handleJoinRoom(ws, roomId, username, avatar) {
+  if (!rooms.has(roomId)) {
     rooms.set(roomId, {
       players: [],
       board: Array(225).fill(null),
