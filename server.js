@@ -177,7 +177,7 @@ function handleDisconnect(ws) {
   room.players.forEach((player) => {
     if (player.ws !== ws) {
       player.ws.send(
-        JSON.stringify({ type: "game-over", message: "Opponent disconnected!" })
+        JSON.stringify({ type: "game-over", message: "Opponent disconnected!", symbol: ws.symbol })
       );
     }
   });
