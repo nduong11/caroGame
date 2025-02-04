@@ -115,7 +115,7 @@ function handleMove(ws, { index }) {
         JSON.stringify({ type: "game-over", message: `${ws.symbol} wins!`,  payload: winner, symbol: ws.symbol })
       );
     });
-
+    deleteRoomAPI(roomId);
     rooms.delete(ws.roomId);
     return;
   } else if (room.board.every((cell) => cell)) {
@@ -124,7 +124,7 @@ function handleMove(ws, { index }) {
         JSON.stringify({ type: "game-over", message: "It's a draw!" })
       );
     });
-
+    deleteRoomAPI(roomId);
     rooms.delete(ws.roomId);
     return;
   }
@@ -184,6 +184,7 @@ function handleDisconnect(ws) {
       );
     }
   });
+  deleteRoomAPI(roomId);
   rooms.delete(roomId);
 }
 
