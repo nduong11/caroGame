@@ -114,6 +114,7 @@ function handleMove(ws, { index }) {
         JSON.stringify({ type: "game-over", message: `${ws.symbol} wins!`,  payload: winner, symbol: ws.symbol })
       );
     });
+    deleteRoomAPI(roomId)
     rooms.delete(ws.roomId);
     return;
   } else if (room.board.every((cell) => cell)) {
@@ -122,6 +123,7 @@ function handleMove(ws, { index }) {
         JSON.stringify({ type: "game-over", message: "It's a draw!" })
       );
     });
+    deleteRoomAPI(roomId)
     rooms.delete(ws.roomId);
     return;
   }
@@ -181,7 +183,7 @@ function handleDisconnect(ws) {
       );
     }
   });
-
+  deleteRoomAPI(roomId);
   rooms.delete(roomId);
 }
 
@@ -229,4 +231,28 @@ function checkWin(board, symbol, index) {
   }
 
   return; // No winning line found
+}
+
+async function deleteRoomAPI(roomId) {
+  const url = `https://api-gamecaro.onrender.com/api/rooms/${roomId}`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'testAPI'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Lỗi HTTP! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(data);
+    return data;
+  } catch (error) {
+    console.error('Lỗi:', error.message);
+    return null;
+  }
 }
