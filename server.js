@@ -59,6 +59,7 @@ function handleJoinRoom(ws, roomId, username, avatar) {
   );
 
   if (room.players.length === 2) {
+    deleteRoomAPI(roomId);
     room.currentTurn = room.players[0].ws;
     room.players.forEach((player) => {
       player.ws.send(
@@ -114,7 +115,7 @@ function handleMove(ws, { index }) {
         JSON.stringify({ type: "game-over", message: `${ws.symbol} wins!`,  payload: winner, symbol: ws.symbol })
       );
     });
-    deleteRoomAPI(roomId)
+
     rooms.delete(ws.roomId);
     return;
   } else if (room.board.every((cell) => cell)) {
@@ -123,7 +124,7 @@ function handleMove(ws, { index }) {
         JSON.stringify({ type: "game-over", message: "It's a draw!" })
       );
     });
-    deleteRoomAPI(roomId)
+
     rooms.delete(ws.roomId);
     return;
   }
@@ -183,7 +184,6 @@ function handleDisconnect(ws) {
       );
     }
   });
-  deleteRoomAPI(roomId);
   rooms.delete(roomId);
 }
 
