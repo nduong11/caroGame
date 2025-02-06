@@ -17,6 +17,8 @@ wss.on("connection", (ws) => {
       handleJoinRoom(ws, payload.roomId, payload.username, payload.avatar);
     } else if (type === "move") {
       handleMove(ws, payload);
+    }else if (type === "chat"){
+      handleChat(ws, payload.message);
     }
   });
 
@@ -25,6 +27,24 @@ wss.on("connection", (ws) => {
     handleDisconnect(ws);
   });
 });
+
+// Handle chat message
+function handleChat(ws, message) {
+  const room = rooms.get(ws.roomId);
+  if (!room) return;
+
+  // Gửi tin nhắn đến tất cả các người chơi trong phòng
+  room.players.forEach((player) => {
+    player.ws.send(
+      JSON.stringify({
+        type: "chat",
+        message: message,
+      })
+    );
+  }
+  );
+}
+
 
 // Handle joining a room
 function handleJoinRoom(ws, roomId, username, avatar) {

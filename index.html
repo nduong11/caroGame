@@ -7,7 +7,7 @@
   <style>
     #board {
       display: grid;
-      grid-template-columns: repeat(10, 50px);
+      grid-template-columns: repeat(15, 50px); /* 15x15 grid */
       grid-gap: 2px;
     }
     .cell {
@@ -21,6 +21,23 @@
       border: 1px solid #ccc;
       cursor: pointer;
     }
+    #chat-box {
+      width: 300px;
+      height: 150px;
+      overflow-y: scroll;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+      padding: 5px;
+      background-color: #f9f9f9;
+    }
+    #chat-input {
+      width: 300px;
+      padding: 5px;
+    }
+    #send-button {
+      padding: 5px 10px;
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -28,13 +45,19 @@
   <label for="roomId">Room ID:</label>
   <input type="text" id="roomId" />
   <label for="username">Username:</label>
-  <input type="username" id="username" />
+  <input type="text" id="username" />
   <label for="avatar">Avatar:</label>
-  <input type="avatar" id="avatar" />
+  <input type="text" id="avatar" />
   <button id="joinRoom">Join Room</button>
   <div id="status"></div>
   <div id="dataReq"></div>
   <div id="board"></div>
+
+  <!-- Chat Box Section -->
+  <div id="chat-box"></div>
+  <input type="text" id="chat-input" placeholder="Enter your message" />
+  <button id="send-button">Send</button>
+
   <script>
     const boardSize = 15;
     const board = document.getElementById('board');
@@ -44,9 +67,12 @@
     const roomIdInput = document.getElementById('roomId');
     const usernameInput = document.getElementById('username');
     const avatarInput = document.getElementById('avatar');
+    const chatBox = document.getElementById('chat-box');
+    const chatInput = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
     const cells = [];
     let mySymbol;
-  
+
     for (let i = 0; i < boardSize * boardSize; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
@@ -54,15 +80,16 @@
       board.appendChild(cell);
       cells.push(cell);
     }
+
     // WebSocket setup
-    const ws = new WebSocket('wss://carogame.onrender.com');
-    // const ws = new WebSocket('ws://localhost:8080');
+    // const ws = new WebSocket('wss://carogame.onrender.com');
+    const ws = new WebSocket('ws://localhost:8080');
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if(data.type === 'waiting'){
+      if (data.type === 'waiting') {
         status.textContent = data.message;
-      }else if (data.type === 'game-ready') {
+      } else if (data.type === 'game-ready') {
         status.textContent = data.message;
         dataReq.textContent = `${data.players[0].username}, ${data.players[0].avatar} -- ${data.players[1].username}, ${data.players[1].avatar}`;
         console.log(data.players);
@@ -79,9 +106,14 @@
         status.textContent = data.payload.timeLeft + ' ' + data.payload.currentPlayer;
       } else if (data.type === 'timeout') {
         status.textContent = data.message;
+      } else if (data.type === 'chat') {
+        const chatMessage = document.createElement('div');
+        chatMessage.textContent = data.message;
+        chatBox.appendChild(chatMessage);
+        chatBox.scrollTop = chatBox.scrollHeight; // Keep scroll at the bottom
       }
     };
-  
+
     joinRoomButton.addEventListener('click', () => {
       const roomId = roomIdInput.value.trim();
       const username = usernameInput.value.trim();
@@ -90,14 +122,23 @@
         ws.send(JSON.stringify({ type: 'join-room', payload: { roomId, username, avatar } }));
       }
     });
-  
+
     board.addEventListener('click', (e) => {
       if (e.target.className.includes('cell') && !e.target.textContent) {
         const index = e.target.dataset.index;
         ws.send(JSON.stringify({ type: 'move', payload: { index: parseInt(index) } }));
       }
     });
+
+    sendButton.addEventListener('click', () => {
+      const message = chatInput.value.trim();
+      const username = usernameInput.value.trim();
+      if (message) {
+        ws.send(JSON.stringify({ type: 'chat', payload: { message: `${username}:${message}` } }));
+        chatInput.value = ''; // Clear input after sending
+      }
+    });
   </script>
-  
+
 </body>
 </html>
