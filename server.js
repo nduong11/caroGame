@@ -19,6 +19,8 @@ wss.on("connection", (ws) => {
       handleMove(ws, payload);
     }else if (type === "chat"){
       handleChat(ws, payload.message);
+    }else if (type === "surrender") {  
+      handleDisconnect(ws);
     }
   });
 
